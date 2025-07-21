@@ -6,7 +6,7 @@ export default function Header({ onNewTask }) {
     const { user, logout } = useContext(AuthContext);
     return (
         <header className="app-header">
-            <h1><Kanban color="var(--accent-color)" weight="fill" />AI Kanban Board</h1>
+            <h1><Kanban color="var(--accent-color)" weight="fill" />Collaborative AI Todo Board</h1>
             <div className="header-controls">
                 <div className="welcome-msg">Welcome, <span>{user?.username}</span></div>
                 <button className="btn btn-primary" onClick={onNewTask}><Plus weight="bold" />New Task</button>
