@@ -6,19 +6,15 @@ const User = require('../models/User');
 const ActionLog = require('../models/ActionLog');
 const router = express.Router();
 
-// --- Helper Functions ---
-
-// Helper to create logs and broadcast via Socket.IO
 const createAndBroadcastLog = async (io, user, action) => {
     const log = new ActionLog({ user: user.username, action });
     await log.save();
     io.emit('log:new', log);
 };
 
-// A mock function to simulate calling the Gemini API
 const callGeminiAPI = async (prompt) => {
     console.log("Calling genuine Gemini API with prompt:", prompt);
-    const apiKey = "AIzaSyBSYnQVElPVx0QTvQtLZn-1KBkd7NSMIbM"; // Leave empty, handled by environment
+    const apiKey = process.env.API_KEY; 
     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     try {
@@ -42,15 +38,12 @@ const callGeminiAPI = async (prompt) => {
 
     } catch (error) {
         console.error("Gemini API call error:", error);
-        // Provide a helpful fallback message to the user
         return "Sorry, the AI feature is currently unavailable.";
     }
 };
 
 
-// --- API Routes ---
 
-// GET /api/tasks/board - Get all board data
 router.get('/board', auth, async (req, res) => {
     try {
         const tasks = await Task.find().populate('assignedUser', 'username').sort({ createdAt: 'desc' });
@@ -63,14 +56,12 @@ router.get('/board', auth, async (req, res) => {
     }
 });
 
-// POST /api/tasks - Create a new task
 router.post('/', auth, async (req, res) => {
     const { title, description, priority } = req.body;
     const io = req.app.get('socketio');
 
     try {
         const currentUser = await User.findById(req.user.id);
-        // Validation
         const existingTask = await Task.findOne({ title: { $regex: new RegExp(`^${title}$`, 'i') } });
         if (existingTask) return res.status(400).json({ message: 'Task title must be unique.' });
         if (['todo', 'in progress', 'done'].includes(title.toLowerCase())) return res.status(400).json({ message: 'Task title cannot be a column name.' });
@@ -88,7 +79,6 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// PUT /api/tasks/:id - Update a task
 router.put('/:id', auth, async (req, res) => {
     const { title, description, priority, status, assignedUser, version } = req.body;
     const io = req.app.get('socketio');
@@ -98,7 +88,6 @@ router.put('/:id', auth, async (req, res) => {
         let task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({ message: 'Task not found' });
 
-        // Conflict detection
         if (task.version !== version) {
             io.to(req.user.id).emit('task:conflict', { taskId: task._id, serverVersion: task, clientVersion: { ...req.body, _id: task._id } });
             return res.status(409).json({ message: 'Conflict detected' });
@@ -106,7 +95,6 @@ router.put('/:id', auth, async (req, res) => {
 
         const originalTask = { ...task.toObject() };
 
-        // Update fields
         task.title = title ?? task.title;
         task.description = description ?? task.description;
         task.priority = priority ?? task.priority;
@@ -117,7 +105,6 @@ router.put('/:id', auth, async (req, res) => {
         const updatedTask = await task.save();
         const populatedTask = await Task.findById(updatedTask._id).populate('assignedUser', 'username');
 
-        // Log the specific action
         if (originalTask.status !== populatedTask.status) {
             await createAndBroadcastLog(io, currentUser, `moved task "${populatedTask.title}" to ${populatedTask.status}`);
         } else {
@@ -132,7 +119,6 @@ router.put('/:id', auth, async (req, res) => {
     }
 });
 
-// DELETE /api/tasks/:id - Delete a task
 router.delete('/:id', auth, async (req, res) => {
     const io = req.app.get('socketio');
     try {
@@ -151,7 +137,6 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
-// POST /api/tasks/:id/smart-assign - Smart assign a task
 router.post('/:id/smart-assign', auth, async (req, res) => {
     const io = req.app.get('socketio');
     try {
@@ -159,7 +144,6 @@ router.post('/:id/smart-assign', auth, async (req, res) => {
         let task = await Task.findById(req.params.id);
         if (!task) return res.status(404).json({ message: 'Task not found' });
 
-        // This is a simplified active task count. A more robust solution might involve a separate field.
         const userTaskCounts = await Task.aggregate([
             { $match: { status: { $ne: 'Done' }, assignedUser: { $ne: null } } },
             { $group: { _id: '$assignedUser', count: { $sum: 1 } } }
@@ -189,11 +173,7 @@ router.post('/:id/smart-assign', auth, async (req, res) => {
     }
 });
 
-// =======================================================================
-// AI FEATURE ROUTES - ADD THESE TO YOUR FILE
-// =======================================================================
 
-// POST /api/tasks/generate-description - Generate description with AI
 router.post('/generate-description', auth, async (req, res) => {
     const { title } = req.body;
     if (!title) {
@@ -209,7 +189,6 @@ router.post('/generate-description', auth, async (req, res) => {
     }
 });
 
-// POST /api/tasks/:id/suggest-subtasks - Suggest sub-tasks with AI
 router.post('/:id/suggest-subtasks', auth, async (req, res) => {
     const io = req.app.get('socketio');
     try {

@@ -1,11 +1,11 @@
 :root {
-    --bg-color: #111827; /* Dark Slate Blue */
-    --primary-color: #1F2937; /* Darker Slate */
-    --secondary-color: #374151; /* Slate Gray */
-    --accent-color: #EC4899; /* Vibrant Pink/Magenta */
-    --ai-accent-color: #8B5CF6; /* Vibrant Purple */
-    --font-color: #F9FAFB; /* Almost White */
-    --font-color-secondary: #9CA3AF; /* Lighter Gray */
+    --bg-color: #111827; 
+    --primary-color: #1F2937; 
+    --secondary-color: #374151;
+    --accent-color: #EC4899; 
+    --ai-accent-color: #8B5CF6;
+    --font-color: #F9FAFB; 
+    --font-color-secondary: #9CA3AF; 
     --border-color: #4B5563;
     --success-color: #10B981;
     --error-color: #EF4444;

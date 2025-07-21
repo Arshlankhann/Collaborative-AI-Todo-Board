@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const ActionLogSchema = new mongoose.Schema({
-  user: { type: String, required: true }, // Storing username directly for simplicity
+  user: { type: String, required: true }, 
   action: { type: String, required: true },
 }, { timestamps: true });
 

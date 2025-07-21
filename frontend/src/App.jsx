@@ -13,7 +13,6 @@ function App() {
   );
 }
 
-// A helper component to access AuthContext after it has been provided.
 const AppContent = () => {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
